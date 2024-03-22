@@ -10,8 +10,10 @@
 #include <sstream>
 #include <any>
 #include <stdexcept>
+#include <typeinfo>
 
 namespace cppargparser {
+
 	enum class ArgType {
 		STRING,
 		INT,
@@ -84,7 +86,7 @@ namespace cppargparser {
 
 
 	class ArgParser {
-	
+
 		struct ArgumentInfo {
 			std::string value;
 			bool positional;
@@ -96,11 +98,31 @@ namespace cppargparser {
 		std::map<std::string, ArgumentInfo> arguments;
 
 	public:
-		ArgParser() {
+		ArgParser(const std::string name = "program"){
 			// Automatically load help message
+			program_name = name;
 			addArgument("-h", false, false, "Display this help message", ArgType::BOOL);
 			addArgument("--help", false, false, "Display this help message", ArgType::BOOL);
 		}
+
+
+		template<typename T>
+			T getTypedArg(const std::string &name) {
+				if (arguments.find(name) != arguments.end()) {
+					const auto &matcher = checkArg(arguments[name]);
+					if (!matcher.value.has_value()) {
+						throw std::runtime_error("No value present for argument: " + name);
+					}
+					try {
+						return std::any_cast<T>(matcher.value);
+					} catch (const std::bad_any_cast& e) {
+						throw std::runtime_error("Invalid type for argument: " + name);
+					}
+				} else {
+					throw std::runtime_error("Argument not found: " + name);
+				}
+			}
+	
 
 
 		ArgTypeMatcher checkArg(ArgumentInfo argument) {
@@ -131,6 +153,9 @@ namespace cppargparser {
 
 		void addArgument(const std::string& name, bool positional, bool required = false, const std::string& help = "", ArgType type = ArgType::STRING, std::string value = "") {
 			arguments[name] = ArgumentInfo{value, positional, required, help, type};
+			if (positional) {
+				positional_args.push(name);
+			}
 		}
 
 		void parse_args(int argc, const char *argv[]) {
@@ -184,18 +209,10 @@ namespace cppargparser {
 
 		}
 	
-		ArgTypeMatcher getArg(const std::string& name) {
-			if (arguments.find(name) != arguments.end()) {
-				ArgTypeMatcher checker = checkArg(arguments[name]);
-				return checker;
-			} else {
-				return ArgTypeMatcher{{}, "", ""};
-			}
-		}
 
 		std::string generateHelpMessage() {
 			std::stringstream ss;
-			ss << "Usage: " << std::endl;
+			ss << "Usage: ./"  << program_name << " <flags>"<< std::endl;
 			for (auto& arg : arguments) { 
 				ss << arg.first << " :\t " << arg.second.help << std::endl;
 			}
@@ -211,7 +228,8 @@ namespace cppargparser {
 		}
 
 		std::queue<std::string> positional_args;
-
+		std::string program_name;
+		
 	};
 }
 

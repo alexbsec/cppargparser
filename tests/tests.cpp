@@ -14,11 +14,13 @@ protected:
 
     cppargparser::ArgParser* parser;
 };
-/*
+
+
 TEST_F(ArgParserTest, TestAddArgument) {
     parser->addArgument("--test", false, false, "A test argument", cppargparser::ArgType::STRING, "value");
     std::string expected = "value";
-    ASSERT_EQ(parser->getArg("--test"), expected);
+    std::string actual = parser->getTypedArg<std::string>("--test");
+    ASSERT_EQ(actual, expected);
 }
 
 
@@ -28,9 +30,11 @@ TEST_F(ArgParserTest, ParseMultipleOptionalArguments) {
 	parser->addArgument("--test", false, false, "test", cppargparser::ArgType::STRING);
 	parser->addArgument("--test2", false, false, "test2", cppargparser::ArgType::STRING);
 	parser->parse_args(argc, argv);
-
-	ASSERT_EQ(parser->getArg("--test"), "test");
-	ASSERT_EQ(parser->getArg("--test2"), "test2");
+	
+	std::string actual1 = parser->getTypedArg<std::string>("--test");
+	std::string actual2 = parser->getTypedArg<std::string>("--test2");
+	ASSERT_EQ(actual1, "test");
+	ASSERT_EQ(actual2, "test2");
 }
 
 // test help message
@@ -44,7 +48,7 @@ TEST_F(ArgParserTest, GenerateHelpMessage) {
     std::string helpMessage = parser->generateHelpMessage();
 
     // Verify
-    std::string expected = "Usage: \n--help :\t Display this help message\n"
+    std::string expected = "Usage: ./program <flags>\n--help :\t Display this help message\n"
                        "--option :\t This is a required option\n"
                        "--test :\t This is a test argument\n"
                        "-h :\t Display this help message\n";
@@ -120,5 +124,43 @@ TEST_F(ArgParserTest, ValidateCharArgument) {
 }
 
 
+TEST_F(ArgParserTest, ValidateGetTypedArg) {
+	int argc = 4;
+	const char* argv[] = {"./test", "--test", "12", "--test2"};
+	parser->addArgument("--test", false, false, "test", cppargparser::ArgType::INT);
+	parser->addArgument("--test2", false, false, "test2", cppargparser::ArgType::BOOL, "false");
+	parser->parse_args(argc, argv);
 
-*/
+	int actual = parser->getTypedArg<int>("--test");
+	bool actual2 = parser->getTypedArg<bool>("--test2");
+
+	ASSERT_EQ(actual, 12);
+	ASSERT_EQ(actual2, true);
+
+}
+
+TEST_F(ArgParserTest, ValidatePositionalArg) {
+	int argc = 2;
+	const char* argv[] = {"./test", "12"};
+	parser->addArgument("number", true, false, "A number", cppargparser::ArgType::INT);	
+	parser->parse_args(argc, argv);
+
+	int actual = parser->getTypedArg<int>("number");
+	ASSERT_EQ(actual, 12);
+
+}
+
+TEST_F(ArgParserTest, ValidatePositionalArgWithOptionalArg) {
+	int argc = 4;
+	const char* argv[] = {"./test", "12", "--test", "test"};
+	parser->addArgument("number", true, false, "A number", cppargparser::ArgType::INT);
+	parser->addArgument("--test", false, false, "test", cppargparser::ArgType::STRING);
+	parser->parse_args(argc, argv);
+
+	int actual = parser->getTypedArg<int>("number");
+	std::string actual2 = parser->getTypedArg<std::string>("--test");
+
+	ASSERT_EQ(actual, 12);
+	ASSERT_EQ(actual2, "test");
+
+}
