@@ -26,6 +26,7 @@ int main(int argc, const char* argv[]) {
 
     delete parser; // Use this at the end of your code to free the memory allocated by the parser
     return EXIT_SUCCESS;
+}
 ```
 
 To access the arguments and flags, you must use the `getTypedArg` template function, which takes as input the name of the argument or flag and the type of the argument or flag. For example:
@@ -50,6 +51,7 @@ int main(int argc, const char* argv[]) {
 
     delete parser;
     return EXIT_SUCCESS;
+}
 ```
 
 If you want to give positional arguments, you must set the `positional` argument to `true` in the `addArgument` function. For example:
@@ -67,7 +69,7 @@ int main(int argc, const char* argv[]) {
     delete parser;
     return EXIT_SUCCESS;
 }
-
+```
 
 # Known issues
 
