@@ -20,6 +20,12 @@ FetchContent_Declare(
 include(GoogleTest)
 gtest_discover_tests(tests)
 
+if(DEFINED ENV{CPPARGPARSER_DIR})
+    include_directories($ENV{CPPARGPARSER_DIR})
+else()
+    message(FATAL_ERROR "CPPARGPARSER_DIR environment variable is not set.")
+endif()
+
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
